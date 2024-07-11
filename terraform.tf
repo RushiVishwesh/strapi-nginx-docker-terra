@@ -101,33 +101,6 @@ resource "aws_ecs_task_definition" "strapi_task" {
           hostPort      = 1337
         }
       ]
-    },
-    {
-      name      = "nginx"
-      image     = "nginx:latest"
-      essential = true
-      portMappings = [
-        {
-          containerPort = 80
-          hostPort      = 80
-        }
-      ]
-      command = [
-        "sh",
-        "-c",
-        "echo 'server {' >> /etc/nginx/nginx.conf",
-        "echo '    listen 80 default_server;' >> /etc/nginx/nginx.conf",
-        "echo '    listen [::]:80 default_server;' >> /etc/nginx/nginx.conf",
-        "echo '    root /var/www/html;' >> /etc/nginx/nginx.conf",
-        "echo '    index index.html index.htm index.nginx-debian.html;' >> /etc/nginx/nginx.conf",
-        "echo '    server_name vishweshrushi.contentecho.in;' >> /etc/nginx/nginx.conf",
-        "echo '    location / {' >> /etc/nginx/nginx.conf",
-        "echo '        proxy_pass http://localhost:1337;' >> /etc/nginx/nginx.conf",
-        "echo '    }' >> /etc/nginx/nginx.conf",
-        "echo '}' >> /etc/nginx/nginx.conf",
-        "nginx -g 'daemon off;'"
-      ]
-      depends_on = ["strapi"]
     }
   ])
 
@@ -183,13 +156,87 @@ output "public_ip" {
     value = data.aws_network_interface.interface_tags.association[0].public_ip
 }
 
-resource "aws_route53_record" "vishweshrushi" {
+resource "tls_private_key" "example" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "terra_key_strapi" {
+  key_name   = "terra_key_strapi"
+  public_key = tls_private_key.example.public_key_openssh
+}
+
+resource "aws_instance" "strapi" {
   depends_on = [data.aws_network_interface.interface_tags]
+  ami           = "ami-04a81a99f5ec58529"
+  instance_type = "t2.small"
+  key_name      = aws_key_pair.terra_key_strapi.key_name
+  security_groups = [aws_security_group.strapi_terra_sg_vishwesh.name]
+  
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = tls_private_key.example.private_key_pem
+    host        = self.public_ip
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo apt update -y",
+      "sudo apt install nginx -y",
+      "sudo rm /etc/nginx/sites-available/default",
+      "sudo bash -c 'echo \"server {\" >> /etc/nginx/sites-available/default'",
+      "sudo bash -c 'echo \"    listen 80 default_server;\" >> /etc/nginx/sites-available/default'",
+      "sudo bash -c 'echo \"    listen [::]:80 default_server;\" >> /etc/nginx/sites-available/default'",
+      "sudo bash -c 'echo \"    root /var/www/html;\" >> /etc/nginx/sites-available/default'",
+      "sudo bash -c 'echo \"    index index.html index.htm index.nginx-debian.html;\" >> /etc/nginx/sites-available/default'",
+      "sudo bash -c 'echo \"    server_name vishweshrushi.contentecho.in;\" >> /etc/nginx/sites-available/default'",
+      "sudo bash -c 'echo \"    location / {\" >> /etc/nginx/sites-available/default'",
+      "sudo bash -c 'echo \"        proxy_pass http://${data.aws_network_interface.interface_tags.association[0].public_ip}:1337;\" >> /etc/nginx/sites-available/default'",
+      "sudo bash -c 'echo \"    }\" >> /etc/nginx/sites-available/default'",
+      "sudo bash -c 'echo \"}\" >> /etc/nginx/sites-available/default'",
+      "sudo systemctl restart nginx"
+    ]
+  }
+
+  tags = {
+    Name = "Strapi-nginx-deploy-vishwesh"
+  }
+}
+
+resource "aws_route53_record" "vishweshrushi" {
   zone_id = "Z06607023RJWXGXD2ZL6M"
   name    = "vishweshrushi.contentecho.in"
   type    = "A"
   ttl     = 300
-  records = [data.aws_network_interface.interface_tags.association[0].public_ip]
+  records = [aws_instance.strapi.public_ip]
+}
+
+resource "null_resource" "certbot" {
+  depends_on = [aws_route53_record.vishweshrushi]
+
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = tls_private_key.example.private_key_pem
+      host        = aws_instance.strapi.public_ip
+    }
+
+    inline = [
+      "sudo apt install certbot python3-certbot-nginx -y",
+      "sudo certbot --nginx -d vishweshrushi.contentecho.in --non-interactive --agree-tos -m rushivishwesh02@gmail.com"
+    ]
+  }
+}
+
+output "private_key" {
+  value     = tls_private_key.example.private_key_pem
+  sensitive = true
+}
+
+output "instance_ip" {
+  value = aws_instance.strapi.public_ip
 }
 
 output "subdomain_url" {
