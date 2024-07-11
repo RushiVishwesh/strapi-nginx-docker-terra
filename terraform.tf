@@ -115,7 +115,7 @@ resource "aws_ecs_task_definition" "strapi_task" {
       command = [
         "sh",
         "-c",
-        "echo 'events {} http { server { listen 80; server_name vishweshrushi.contentecho.in; location / { proxy_pass http://strapi:1337; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; } location /admin { proxy_pass http://strapi:1337/admin; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; } } }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+        "echo 'events {} http { server { listen 80; server_name vishweshrushi.contentecho.in; location / { proxy_pass http://strapi:1337; } } }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
       ]
       depends_on = ["strapi"]
     }
