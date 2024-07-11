@@ -115,7 +115,7 @@ resource "aws_ecs_task_definition" "strapi_task" {
       command = [
         "sh",
         "-c",
-        "echo 'events {} http { server { listen 80; location / { proxy_pass http://localhost:1337; } location /admin { proxy_pass http://localhost:1337/admin; } } }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+        "echo 'events {} http { server { listen 80; server_name vishweshrushi.contentecho.in; location / { proxy_pass http://localhost:1337; } location /admin { proxy_pass http://localhost:1337/admin; } } }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
       ]
     }
   ])
