@@ -155,7 +155,7 @@ resource "null_resource" "wait_for_eni" {
   depends_on = [aws_ecs_service.strapi_service]
 
   provisioner "local-exec" {
-    command = "sleep 20"
+    command = "sleep 60"
   }
 }
 
