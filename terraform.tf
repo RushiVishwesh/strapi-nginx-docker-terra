@@ -151,6 +151,7 @@ resource "aws_ecs_service" "strapi_service" {
 }
 
 data "aws_network_interface" "interface_tags" {
+  depends_on = [aws_ecs_service.strapi_service]
   filter {
     name   = "tag:aws:ecs:serviceName"
     values = ["strapi-service"]
