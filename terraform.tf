@@ -115,7 +115,7 @@ resource "aws_ecs_task_definition" "strapi_task" {
       command = [
         "sh",
         "-c",
-        "echo 'events {} http { server { listen 80; server_name vishweshrushi.contentecho.in; location / { proxy_pass http://localhost:1337; } location /admin { proxy_pass http://localhost:1337/admin; } } }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+        "echo 'events {} http { server { listen 80; location / { proxy_pass http://localhost:1337; } location /admin { proxy_pass http://localhost:1337/admin; } } }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
       ]
     }
   ])
@@ -150,23 +150,4 @@ resource "aws_ecs_service" "strapi_service" {
   ]
 }
 
-data "aws_network_interface" "interface_tags" {
-  depends_on = [aws_ecs_service.strapi_service]
-  filter {
-    name   = "tag:aws:ecs:serviceName"
-    values = ["strapi-service"]
-  }
-}
 
-resource "aws_route53_record" "vishweshrushi" {
-  depends_on = [data.aws_network_interface.interface_tags]
-  zone_id = "Z06607023RJWXGXD2ZL6M"
-  name    = "vishweshrushi.contentecho.in"
-  type    = "A"
-  ttl     = 300
-  records = [data.aws_network_interface.interface_tags.association[0].public_ip]
-}
-
-output "subdomain_url" {
-  value = "http://vishweshrushi.contentecho.in"
-}
