@@ -115,7 +115,17 @@ resource "aws_ecs_task_definition" "strapi_task" {
       command = [
         "sh",
         "-c",
-        "echo 'events {} http { server { listen 80; server_name vishweshrushi.contentecho.in; location / { proxy_pass http://strapi:1337; } } }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+        "echo 'server {' >> /etc/nginx/nginx.conf",
+        "echo '    listen 80 default_server;' >> /etc/nginx/nginx.conf",
+        "echo '    listen [::]:80 default_server;' >> /etc/nginx/nginx.conf",
+        "echo '    root /var/www/html;' >> /etc/nginx/nginx.conf",
+        "echo '    index index.html index.htm index.nginx-debian.html;' >> /etc/nginx/nginx.conf",
+        "echo '    server_name vishweshrushi.contentecho.in;' >> /etc/nginx/nginx.conf",
+        "echo '    location / {' >> /etc/nginx/nginx.conf",
+        "echo '        proxy_pass http://localhost:1337;' >> /etc/nginx/nginx.conf",
+        "echo '    }' >> /etc/nginx/nginx.conf",
+        "echo '}' >> /etc/nginx/nginx.conf",
+        "nginx -g 'daemon off;'"
       ]
       depends_on = ["strapi"]
     }
