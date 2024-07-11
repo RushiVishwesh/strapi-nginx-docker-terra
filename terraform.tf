@@ -163,6 +163,9 @@ data "aws_network_interface" "interface_tags" {
     name   = "tag:aws:ecs:serviceName"
     values = ["strapi-service"]
   }
+  depends_on = [
+    null_resource.wait_for_eni
+  ]
 }
 
 output "public_ip" {
