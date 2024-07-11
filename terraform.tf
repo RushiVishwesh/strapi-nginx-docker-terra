@@ -149,5 +149,3 @@ resource "aws_ecs_service" "strapi_service" {
     aws_ecs_task_definition.strapi_task
   ]
 }
-
-
