@@ -149,3 +149,35 @@ resource "aws_ecs_service" "strapi_service" {
     aws_ecs_task_definition.strapi_task
   ]
 }
+
+resource "null_resource" "wait_for_eni" {
+  depends_on = [aws_ecs_service.strapi_service]
+
+  provisioner "local-exec" {
+    command = "sleep 20"
+  }
+}
+
+data "aws_network_interface" "interface_tags" {
+  filter {
+    name   = "tag:aws:ecs:serviceName"
+    values = ["strapi-service"]
+  }
+}
+
+output "public_ip" {
+    value = data.aws_network_interface.interface_tags.association[0].public_ip
+}
+
+resource "aws_route53_record" "vishweshrushi" {
+  depends_on = [data.aws_network_interface.interface_tags]
+  zone_id = "Z06607023RJWXGXD2ZL6M"
+  name    = "vishweshrushi.contentecho.in"
+  type    = "A"
+  ttl     = 300
+  records = [data.aws_network_interface.interface_tags.association[0].public_ip]
+}
+
+output "subdomain_url" {
+  value = "http://vishweshrushi.contentecho.in"
+}
