@@ -1,7 +1,7 @@
 provider "aws" {
   region     = "ap-south-1"
   access_key = "AKIARENAGCMW6XT2FDGR"
-  secret_key = "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
+  secret_key = "5UroK6pgrYODf68I5pDc1eypo4ZE/7kbjvAEQYum"
 "
 }
 
@@ -33,5 +33,6 @@ resource "aws_instance" "Project" {
 
   count           = 1
 }
+
 
 
