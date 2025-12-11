@@ -24,11 +24,9 @@ resource "aws_instance" "Project" {
   ami             = "ami-0ecb62995f68bb549"
   instance_type   = "t3.micro"
   security_groups = [aws_security_group.Project_sg.name]
-
-  # Use your already-created key pair
   key_name        = "strapi"
-
   count           = 1
 }
+
 
 
