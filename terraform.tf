@@ -1,6 +1,5 @@
 provider "aws" {
   region     = "ap-south-1"
-
 }
 
 resource "aws_security_group" "Project_sg" {
@@ -31,4 +30,5 @@ resource "aws_instance" "Project" {
 
   count           = 1
 }
+
 
